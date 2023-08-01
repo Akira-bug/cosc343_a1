@@ -93,7 +93,7 @@ def update_list(current_list, sequence, score_of_sequence=tuple()):
 
 
 def get_best_guess(current_list):
-    return minimax(current_list)
+    return minimax_lazy(current_list)
 
 
 def minimax(current_list):
@@ -104,14 +104,10 @@ def minimax(current_list):
     # Iterate through each item in the list, as guess
     for guess in current_list:
         guess_score_occurrence = {}
-        guess_min_score = tuple()
         # Iterate through each item in the list, as sub_guess,
         # Get the evaluation of the sub_guess as if guess were the goal.
         for sub_guess in current_list:
             score = evaluate_guess(sub_guess, guess)
-            # Keep track of the min score for this loop.
-            if score < guess_min_score:
-                guess_min_score = score
             # Maintain the dictionary of scores and their occurrences.
             if score in guess_score_occurrence:
                 guess_score_occurrence[score] += 1
@@ -130,18 +126,14 @@ def minimax_lazy(current_list):
     """WIP"""
     score_occurrences = {}
     min_score_guess = []
-    min_score_guess = tuple()
+    min_score = tuple()
     # Iterate through each item in the list, as guess
     for guess in current_list:
         guess_score_occurrence = {}
-        guess_min_score = tuple()
         # Iterate through each item in the list, as sub_guess,
         # Get the evaluation of the sub_guess as if guess were the goal.
         for sub_guess in current_list:
-            score = evaluate_guess(sub_guess, guess)
-            # Keep track of the min score for this loop.
-            if score < guess_min_score:
-                guess_min_score = score
+            score = lazy_evaluation(sub_guess, guess)
             # Maintain the dictionary of scores and their occurrences.
             if score in guess_score_occurrence:
                 guess_score_occurrence[score] += 1
@@ -151,10 +143,7 @@ def minimax_lazy(current_list):
         guess_min_score_frequency = min(guess_score_occurrence.items(), key=lambda x: x[0])[1]
 
         # Add the min to the main dictionary of scores and occurrences.
-        # If the frequency of a given min score is less than the one that already occurs more often,
-        # then don't add this to our dictionary.
-        if not guess_min_score_frequency < max(score_occurrences):
-            score_occurrences[guess] = guess_min_score_frequency
+        score_occurrences[guess] = guess_min_score_frequency
     # Get the guess with the most frequent and lowest score.
     min_score = max(score_occurrences, key=lambda x: x[1])
     return min_score
@@ -207,6 +196,22 @@ def evaluate_guess(guess, target):
                 break
 
     return in_place, in_colour
+
+
+def lazy_evaluation(guess, target):
+    """
+        Develops a general heuristic that compares the input guess with the target.
+
+        :param guess: the input guess
+                target: the goal that we are comparing against.
+
+        :return: a heuristic score that represents how close to the target the input guess is.
+    """
+    score = 0
+    for i in guess:
+        if i in target:
+            score+=1
+    return score
 
 
 class MastermindAgent():
