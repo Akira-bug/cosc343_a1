@@ -56,24 +56,16 @@ def time_to_str(time_in_seconds):
 def evaluate_guess(guess,target):
    """ Evaluates a guess against a target
 
-         :param guess: a R x C numpy array of valid colour characters that constitutes a guess
+         :param guess: a list or numpy array of valid colour characters that constitutes a guess
 
-                target: a R x C numpy array of valid colour characters that constitutes target solution
+                target: a list or numpy array of valid colour characters that constitutes target solution
 
 
-         :return: a tuple of 4 vectors:
+         :return: a tuple of 2 integers:
 
-                  R-dimensional vector that gives the number of correct colours in place in each row of the
-                                guess against the target
+                  - the number of correct colours in place in guess against the target
 
-                  R-dimensional vector that gives the number of correct colours out of place in each row of the
-                                guess against the target
-
-                  C-dimensional vector that gives the number of correct colours in place in each column of the
-                                guess against the target
-
-                  C-dimensional vector that gives the number of correct colours out of place in each column of the
-                                guess against the target
+                  - the number of correct colours out of place in guess against the target
 
          """
 
@@ -104,7 +96,7 @@ def evaluate_guess(guess,target):
 
 # Class player is a wrapper for a player agent
 class Player:
-   def __init__(self, playerFile, code_length, colours, num_guesses):
+   def __init__(self, playerFile,code_length,colours,num_guesses):
       self.playerFile = playerFile
 
       if not os.path.exists(playerFile):
@@ -139,10 +131,10 @@ class MastermindGame:
       else:
          self.throwError = self.errorAndExit
 
+      self.colours = self.colours[:num_colours]
+
       if self.verbose:
          print("Mastermind")
-
-         self.colours = self.colours[:num_colours]
 
          print("  Code length: %s" % self.code_length)
          print("      Colours: %s" % self.colours)

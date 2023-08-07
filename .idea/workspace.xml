@@ -3,6 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="ae0b8d76-c02f-47d9-a7da-3545c17f6f5c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mastermind.py" beforeDir="false" afterPath="$PROJECT_DIR$/mastermind.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/my_agent.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_agent.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/settings.py" afterDir="false" />
     </list>

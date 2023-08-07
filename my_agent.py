@@ -12,7 +12,7 @@ from itertools import product
 def get_random_actions(self):
     """
         Function for generating a random sequence of colours.
-
+        Was used for experimentation purposes.
     """
     return np.random.choice(self.colours, size=self.code_length)
 
@@ -27,12 +27,16 @@ def get_initial_list(self):
 
 def initial_guess(self):
     """
-        Based on the optimal guess by Donald Knuth, where contrary to what might seem intuitive,
-        we guess in a pattern using only two colours.
+        Based on the optimal first guess by Donald Knuth, where we guess in a pattern
+        using only two colours.
             e.g. In a sequence of four colours we guess XXYY,
                 where X is any colour and Y is a different colour
-
         See https://en.wikipedia.org/wiki/Mastermind_(board_game)
+
+        My interpretation of this was that half of the sequence should be of 1 colour,
+        and the remaining portion should be composed of another.
+
+        If the code length is odd, then the first colour is placed less than the second.
 
         :return: The best starting guess
     """
@@ -71,50 +75,48 @@ def get_best_guess(current_list):
         Helper function that allows the user to choose which implementation of minimax to use
         when finding the next best guess.
 
+        Final implementation uses the minimax_lazy function.
+
         :param current_list: The current list, of which the guess will be taken from.
         :return: The next best guess.
     """
-    # Uncomment the following line for more accurate, but slow minimax.
-    # return (minimax(current_list)
-    #
+    # Uncomment the following line for more accurate, but very slow minimax.
+    # return (minimax_full(current_list)
+
+    # Quicker mini-max function, Final implementation
     return minimax_lazy(current_list)
 
 
-def minimax(current_list):
+def minimax_full(current_list):
     """
         Implementation of the mini-max algorithm from Knuth 1977, from Wikipedia:
         <link>https://en.wikipedia.org/wiki/Mastermind_(board_game)</link>
 
-        Uses a robust evaluation when comparing each guess to the other in the input list.
+        Uses the robust evaluation when comparing each guess to the other in the input list.
+
+        Not used in final implementation, unless the user modifies the get_best_guess function above.
 
         :param current_list: The current list at this point in the game.
         :return: The next best guess to narrow down the current list.
     """
     score_occurrences = {}
-    # Iterate through each item in the list, as guess
     for guess in current_list:
         guess_score_occurrence = {}
-        # Iterate through each item in the list, as sub_guess,
-        # Get the evaluation of the sub_guess as if guess were the goal.
         for sub_guess in current_list:
             score = evaluate_guess(sub_guess, guess)
-            # Maintain the dictionary of scores and their occurrences.
             if score in guess_score_occurrence:
                 guess_score_occurrence[score] += 1
             else:
                 guess_score_occurrence[score] = 1
-        # Retrieve the lowest score from the associated occurrence.
         guess_min_score_frequency = min(guess_score_occurrence.items(), key=lambda x: x[0])[1]
-        # Add the min to the main dictionary of scores and occurrences.
         score_occurrences[guess] = guess_min_score_frequency
-    # Get the guess with the most frequent and lowest score.
     min_score = max(score_occurrences, key=lambda x: x[1])
     return min_score
 
 
 def minimax_lazy(current_list):
     """
-        Implementation of the mini-max algorithm from Knuth 1977, from Wikipedia:
+        Modified implementation of the mini-max algorithm from Knuth 1977, from Wikipedia:
         <link>https://en.wikipedia.org/wiki/Mastermind_(board_game)</link>
 
         Uses a simpler (lazy) evaluation function that acts as a heuristic in place of
@@ -123,24 +125,30 @@ def minimax_lazy(current_list):
         :param current_list: The current list at this point in the game.
         :return: The next best guess to narrow down the current list.
     """
+    # Dictionary for storing the occurrences of a given score
     score_occurrences = {}
+
     # Iterate through each item in the list, as guess
     for guess in current_list:
         guess_score_occurrence = {}
-        # Iterate through each item in the list, as sub_guess,
-        # Get the evaluation of the sub_guess as if guess were the goal.
+
+        # Iterate through each item in the list, as sub_guess.
         for sub_guess in current_list:
+
+            # Get the evaluation of the sub_guess as if guess were the goal.
             score = lazy_evaluation(sub_guess, guess)
             # Maintain the dictionary of scores and their occurrences.
             if score in guess_score_occurrence:
                 guess_score_occurrence[score] += 1
             else:
                 guess_score_occurrence[score] = 1
-        # Retrieve the lowest score from the associated occurrence.
+
+        # Retrieve the frequency of the lowest score.
         guess_min_score_frequency = min(guess_score_occurrence.items(), key=lambda x: x[0])[1]
 
-        # Add the min to the main dictionary of scores and occurrences.
+        # Add the frequency of the lowest score to the main dictionary, mapping the guess to the frequency.
         score_occurrences[guess] = guess_min_score_frequency
+
     # Get the guess with the most frequent and lowest score.
     min_score = max(score_occurrences, key=lambda x: x[1])
     return min_score
@@ -216,6 +224,15 @@ def lazy_evaluation(guess, target):
             score -= 1
     return score
 
+def average(list):
+    """
+        Used to calculate the average of elements in a given list.
+
+        :param list: the list we want to find the average of.
+
+        :return: the mean of the list.
+    """
+    return sum(list) / len(list)
 
 class MastermindAgent():
     """
@@ -245,13 +262,15 @@ class MastermindAgent():
       :param colours: list of letter representing colours used to play
       :param num_guesses: the max. number of guesses per game
       """
-
         self.code_length = code_length
         self.colours = colours
         self.num_guesses = num_guesses
 
-        # Store a copy of all possibilities as a main list
+        # Store a copy of all possibilities as a main list. Minor performance improvement for my laptop.
         self.true_list = list(product(list(self.colours), repeat=self.code_length))
+
+        # Used for data analysis
+        self.after_first_guess_list = []
 
 
     def AgentFunction(self, percepts):
@@ -285,13 +304,14 @@ class MastermindAgent():
             possibles = get_initial_list(self)
             actions = initial_guess(self)
             possibles.remove(tuple(actions))
-            print(len(possibles))
             return actions
+
         # Update the pool of possible solutions
         else:
             possibles = update_list(possibles, last_guess, score_tuple)
-            print(len(possibles))
+
         # Select the next best guess, removing it from the pool of possible solutions.
         actions = list(get_best_guess(possibles))
         possibles.remove(tuple(actions))
+
         return actions
