@@ -10,13 +10,16 @@ from itertools import product
 
 
 def get_random_actions(self):
-    """ Function for generating a random sequence of colours.
+    """
+        Function for generating a random sequence of colours.
+
     """
     return np.random.choice(self.colours, size=self.code_length)
 
 
 def get_initial_list(self):
-    """ Generates and returns the list of all possible solutions as a list of tuples.
+    """
+        Generates and returns the list of all possible solutions as a list of tuples.
         This list is based on the initialized colour and code-length of the game.
     """
     return self.true_list.copy()
@@ -26,7 +29,7 @@ def initial_guess(self):
     """
         Based on the optimal guess by Donald Knuth, where contrary to what might seem intuitive,
         we guess in a pattern using only two colours.
-            e.g. in a sequence of four colours we guess XXYY,
+            e.g. In a sequence of four colours we guess XXYY,
                 where X is any colour and Y is a different colour
 
         See https://en.wikipedia.org/wiki/Mastermind_(board_game)
@@ -40,35 +43,6 @@ def initial_guess(self):
             c += 1
         guess.append(self.colours[c])
     return guess
-
-
-def update_list_zero(self, current_list, remove_sequence):
-    """
-        Used to remove all sequences of a particular colour. Only to be called when
-        the last guess results in 0 in-place and 0 in-colour.
-
-        :param  current_list: The current list of possibilities.
-
-                remove_sequence: The last guess, where we want to remove all colours in the sequence.
-
-        :return: The updated list, where all guesses with the given colours are removed.
-    """
-    colours_to_remove = set(remove_sequence)
-    remove_list = []
-    for colour in colours_to_remove:
-        i = 0
-        single_colour = []
-        while i < self.code_length:
-            single_colour.append(colour)
-            i += 1
-        remove_list.append(single_colour)
-    new_set = set()
-    for sequence in remove_list:
-        for guess in current_list:
-            if sequence[0] in guess:
-                new_set.add(guess)
-
-    return list(set.difference( set(current_list), new_set))
 
 
 def update_list(current_list, sequence, score_of_sequence=tuple()):
@@ -93,12 +67,28 @@ def update_list(current_list, sequence, score_of_sequence=tuple()):
 
 
 def get_best_guess(current_list):
+    """
+        Helper function that allows the user to choose which implementation of minimax to use
+        when finding the next best guess.
+
+        :param current_list: The current list, of which the guess will be taken from.
+        :return: The next best guess.
+    """
+    # Uncomment the following line for more accurate, but slow minimax.
+    # return (minimax(current_list)
+    #
     return minimax_lazy(current_list)
 
 
 def minimax(current_list):
-    """ Classic implementation of the mini-max algoritm for mastermind
+    """
+        Implementation of the mini-max algorithm from Knuth 1977, from Wikipedia:
+        <link>https://en.wikipedia.org/wiki/Mastermind_(board_game)</link>
 
+        Uses a robust evaluation when comparing each guess to the other in the input list.
+
+        :param current_list: The current list at this point in the game.
+        :return: The next best guess to narrow down the current list.
     """
     score_occurrences = {}
     # Iterate through each item in the list, as guess
@@ -123,10 +113,17 @@ def minimax(current_list):
 
 
 def minimax_lazy(current_list):
-    """WIP"""
+    """
+        Implementation of the mini-max algorithm from Knuth 1977, from Wikipedia:
+        <link>https://en.wikipedia.org/wiki/Mastermind_(board_game)</link>
+
+        Uses a simpler (lazy) evaluation function that acts as a heuristic in place of
+        a true evaluation with information about in-place and in-colour colours.
+
+        :param current_list: The current list at this point in the game.
+        :return: The next best guess to narrow down the current list.
+    """
     score_occurrences = {}
-    min_score_guess = []
-    min_score = tuple()
     # Iterate through each item in the list, as guess
     for guess in current_list:
         guess_score_occurrence = {}
@@ -200,7 +197,11 @@ def evaluate_guess(guess, target):
 
 def lazy_evaluation(guess, target):
     """
-        Develops a general heuristic that compares the input guess with the target.
+        Develops a generalized score that represents a heuristic. Compares the input guess with the target.
+
+        The main purpose of this evaluation function is to provide a quicker computation in place of the
+        normal evaluation that returns a tuple with information about the number of in-place and
+        in-colour sequences in the current guess, compared to the target.
 
         :param guess: the input guess
                 target: the goal that we are comparing against.
@@ -210,7 +211,9 @@ def lazy_evaluation(guess, target):
     score = 0
     for i in guess:
         if i in target:
-            score+=1
+            score += 1
+        else:
+            score -= 1
     return score
 
 
@@ -246,6 +249,8 @@ class MastermindAgent():
         self.code_length = code_length
         self.colours = colours
         self.num_guesses = num_guesses
+
+        # Store a copy of all possibilities as a main list
         self.true_list = list(product(list(self.colours), repeat=self.code_length))
 
 
@@ -272,7 +277,7 @@ class MastermindAgent():
         # Extract different parts of percepts.
         guess_counter, last_guess, in_place, in_colour = percepts
 
-        score = in_place + in_colour
+        # New tuple for passing to update_list function
         score_tuple = (in_place, in_colour)
 
         # Check the state of the game, creates our list of combinations.
@@ -280,18 +285,13 @@ class MastermindAgent():
             possibles = get_initial_list(self)
             actions = initial_guess(self)
             possibles.remove(tuple(actions))
-
             print(len(possibles))
             return actions
-
-        # If the guess is terrible, remove those colours from the guess table.
-        elif score == 0:
-            possibles = update_list_zero(self, possibles, last_guess)
-            print(len(possibles))
+        # Update the pool of possible solutions
         else:
             possibles = update_list(possibles, last_guess, score_tuple)
             print(len(possibles))
-
+        # Select the next best guess, removing it from the pool of possible solutions.
         actions = list(get_best_guess(possibles))
         possibles.remove(tuple(actions))
         return actions
